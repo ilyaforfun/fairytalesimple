@@ -1,0 +1,19 @@
+.story-content {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    white-space: pre-wrap;
+}
+
+.card {
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-control, .form-select {
+    border-radius: 10px;
+}
+
+.btn {
+    border-radius: 25px;
+    padding: 8px 25px;
+}

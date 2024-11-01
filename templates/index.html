@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">Create Your Magical Story</h2>
+                <form action="{{ url_for('generate') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="child_name" class="form-label">Child's Name</label>
+                        <input type="text" class="form-control" id="child_name" name="child_name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="child_age" class="form-label">Age</label>
+                        <input type="number" class="form-control" id="child_age" name="child_age" min="1" max="12" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="story_type" class="form-label">Story Type</label>
+                        <select class="form-select" id="story_type" name="story_type" required>
+                            <option value="">Choose a story type...</option>
+                            <option value="fairy">Fairy Tale</option>
+                            <option value="adventure">Adventure</option>
+                            <option value="educational">Educational</option>
+                            <option value="bedtime">Bedtime Story</option>
+                        </select>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">Generate Story</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

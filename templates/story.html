@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">{{ story.child_name }}'s Magical Story</h2>
+                
+                <div class="text-center mb-4">
+                    <img src="{{ story.image_url }}" alt="Story illustration" class="img-fluid rounded" style="max-height: 300px;">
+                </div>
+                
+                <div class="story-content">
+                    {{ story.content | safe }}
+                </div>
+                
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('index') }}" class="btn btn-primary">Create Another Story</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
