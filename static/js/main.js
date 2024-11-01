@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const ageInput = document.getElementById('child_age');
     const nameInput = document.getElementById('child_name');
     const storyTypeSelect = document.getElementById('story_type');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const generateBtn = document.getElementById('generateBtn');
     
     // Validate age input
     if (ageInput) {
@@ -68,6 +70,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Form validation failed');
                 return;
             }
+            
+            // Show loading indicator and disable submit button
+            loadingIndicator.classList.remove('d-none');
+            generateBtn.disabled = true;
             
             console.log('Form submission validated successfully', {
                 name: name,

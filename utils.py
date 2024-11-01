@@ -5,6 +5,7 @@ import json
 import time
 import logging
 from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
+from app import cache
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -20,8 +21,12 @@ def validate_age_appropriate(age, story_type):
     }
     return age >= age_restrictions.get(story_type, 0)
 
-def generate_story(child_name, age, story_type):
-    """Generate a story using Claude AI."""
+def count_name_occurrences(text, name):
+    """Count how many times a name appears in the text."""
+    return text.lower().count(name.lower())
+
+def generate_story(child_name, age, story_type, max_retries=3):
+    """Generate a story using Claude AI with name consistency check."""
     logger.info(f"Generating story for {child_name}, age {age}, type {story_type}")
     
     if not os.environ.get("ANTHROPIC_API_KEY"):
@@ -31,31 +36,50 @@ def generate_story(child_name, age, story_type):
     anthropic_client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
     
     prompt = f"""Write a {story_type} story for a {age}-year-old child named {child_name}. 
+    IMPORTANT: Use the name "{child_name}" at least 3 times naturally throughout the story.
     The story should be age-appropriate, engaging, and educational. 
     It should be around 300-400 words long.
-    For fairy tales, include magical elements.
-    For adventure stories, include exciting but safe challenges.
-    For educational stories, include learning moments about science or values.
-    For bedtime stories, include calming elements and a peaceful ending."""
+    For fairy tales, include magical elements and make {child_name} the main character.
+    For adventure stories, include exciting but safe challenges that {child_name} overcomes.
+    For educational stories, include learning moments about science or values that {child_name} discovers.
+    For bedtime stories, include calming elements and a peaceful ending with {child_name} feeling safe and sleepy."""
 
-    try:
-        logger.info("Making API call to Claude AI")
-        response = anthropic_client.messages.create(
-            model="claude-3-opus-20240229",
-            max_tokens=1024,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        logger.info("Successfully generated story from Claude AI")
-        return response.content[0].text
-    except anthropic.APIError as e:
-        logger.error(f"Claude AI API error: {str(e)}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error in generate_story: {str(e)}")
-        raise
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"Making API call to Claude AI (attempt {attempt + 1}/{max_retries})")
+            response = anthropic_client.messages.create(
+                model="claude-3-opus-20240229",
+                max_tokens=1024,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            story = response.content[0].text
+            
+            # Check name occurrence
+            name_count = count_name_occurrences(story, child_name)
+            logger.info(f"Name '{child_name}' appears {name_count} times in the story")
+            
+            if name_count >= 3:
+                logger.info("Story generated successfully with sufficient name occurrences")
+                return story
+            else:
+                logger.warning(f"Story generated but only contains {name_count} occurrences of the name")
+                if attempt < max_retries - 1:
+                    continue
+                
+        except anthropic.APIError as e:
+            logger.error(f"Claude AI API error: {str(e)}")
+            if attempt == max_retries - 1:
+                raise
+        except Exception as e:
+            logger.error(f"Unexpected error in generate_story: {str(e)}")
+            if attempt == max_retries - 1:
+                raise
+    
+    raise ValueError(f"Failed to generate story with sufficient name occurrences after {max_retries} attempts")
 
+@cache.memoize(timeout=3600)  # Cache for 1 hour
 def generate_image(story_content):
-    """Generate an illustration using Leonardo AI."""
+    """Generate an illustration using Leonardo AI with caching."""
     logger.info("Starting image generation process")
     
     if not os.environ.get("LEONARDO_API_KEY"):
@@ -76,8 +100,8 @@ def generate_image(story_content):
             "prompt": prompt,
             "modelId": "ac614f96-1082-45bf-be9d-757f2d31c174",  # DreamShaper v8
             "num_images": 1,
-            "width": 768,
-            "height": 768,
+            "width": 512,  # Reduced size for faster generation
+            "height": 512,  # Reduced size for faster generation
             "promptMagic": True,
             "nsfw": False
         }
